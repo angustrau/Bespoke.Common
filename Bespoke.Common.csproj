@@ -30,6 +30,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>bin\Release\Bespoke.Common.XML</DocumentationFile>
+<<<<<<< HEAD
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
     <DebugSymbols>true</DebugSymbols>
@@ -70,6 +71,8 @@
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <DocumentationFile>bin\x86\Release\Bespoke.Common.XML</DocumentationFile>
+=======
+>>>>>>> d354cad3b413c0c4c2f1c34aef5b931a9d0419de
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />

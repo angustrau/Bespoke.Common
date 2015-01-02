@@ -74,10 +74,13 @@ namespace Bespoke.Common
             return (float)sRandom.NextDouble();
         }
 
+
         /// <summary>
         /// Returns a random number within a specified range.
         /// </summary>
-        /// <returns>A single-precision floating point numner greater than or equal to minValue and less than maxValue;
+        /// <param name="minValue">The inclusive lower bound of the random number returned.</param>
+        /// <param name="maxValue">The exclusive upper bound of the random number returned. maxValue must be greater than minValue.</param>
+        /// <returns>A single-precision floating point number greater than or equal to minValue and less than maxValue;
         /// that is, the range of return values includes minValue but not maxValue. If minValue equals maxValue, minValue is returned.</returns>
         /// <exception cref="ArgumentOutOfRangeException">minValue is greater than maxValue.</exception>
         public static float NextFloat(double minValue, double maxValue)
@@ -97,7 +100,9 @@ namespace Bespoke.Common
         /// <summary>
         /// Returns a random number within a specified range.
         /// </summary>
-        /// <returns>A double-precision floating point numner greater than or equal to minValue and less than maxValue;
+        /// <param name="minValue">The inclusive lower bound of the random number returned.</param>
+        /// <param name="maxValue">The exclusive upper bound of the random number returned. maxValue must be greater than minValue.</param>
+        /// <returns>A double-precision floating point number greater than or equal to minValue and less than maxValue;
         /// that is, the range of return values includes minValue but not maxValue. If minValue equals maxValue, minValue is returned.</returns>
         /// <exception cref="ArgumentOutOfRangeException">minValue is greater than maxValue.</exception>
         public static double NextDouble(double minValue, double maxValue)

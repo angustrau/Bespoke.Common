@@ -1,12 +1,11 @@
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Net;
 using System.Net.Sockets;
-using System.IO;
-using System.Text;
-using Bespoke.Common;
 
 namespace Bespoke.Common.Net
 {
@@ -47,24 +46,12 @@ namespace Bespoke.Common.Net
         /// <summary>
         /// Gets the IP address the Tcp server is bound to.
         /// </summary>
-        public IPAddress IPAddress
-        {
-            get
-            {
-                return mIPAddress;
-            }
-        }
+        public IPAddress IPAddress { get; private set; }
 
         /// <summary>
         /// Gets the port the Tcp server is bound to.
         /// </summary>
-        public int Port
-        {
-            get
-            {
-                return mPort;
-            }
-        }
+        public int Port { get; private set; }
 
         /// <summary>
         /// Gets the state of the server.
@@ -95,35 +82,22 @@ namespace Bespoke.Common.Net
         {
             get
             {
-                return mClientConnections.AsReadOnly();
+                lock (mClientConnections)
+                {
+                    return mClientConnections.AsReadOnly();
+                }
             }
         }
 
         /// <summary>
         /// Gets the data reception mode applied to the Tcp server.
         /// </summary>
-        public bool ReceiveDataInline
-        {
-            get
-            {
-                return mReceiveDataInline;
-            }
-        }
+        public bool ReceiveDataInline { get; private set; }
 
         /// <summary>
         /// Gets or sets the expected endianness of integral value types.
         /// </summary>
-        public bool LittleEndianByteOrder
-        {
-            get
-            {
-                return mLittleEndianByteOrder;
-            }
-            set
-            {
-                mLittleEndianByteOrder = value;
-            }
-        }
+        public bool LittleEndianByteOrder { get; set; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TcpServer"/> class.
@@ -144,14 +118,13 @@ namespace Bespoke.Common.Net
         /// <param name="littleEndianByteOrder">The expected endianness of integral value types.</param>
         public TcpServer(IPAddress ipAddress, int port, bool receiveDataInline = true, bool littleEndianByteOrder = true)
         {
-            mPort = port;
-            mIPAddress = ipAddress;
-            mReceiveDataInline = receiveDataInline;
+            Port = port;
+            IPAddress = ipAddress;
+            ReceiveDataInline = receiveDataInline;
             mClientConnections = new List<TcpConnection>();
             mConnectionsToClose = new List<TcpConnection>();
             mIsShuttingDown = false;
-            mListenerReady = new ManualResetEvent(false);
-            mLittleEndianByteOrder = littleEndianByteOrder;
+            LittleEndianByteOrder = littleEndianByteOrder;
         }
 
         /// <summary>
@@ -159,13 +132,13 @@ namespace Bespoke.Common.Net
         /// </summary>
         public void Dispose()
         {
-            lock (this)
+            if (mIsShuttingDown == false)
             {
-                if (mIsShuttingDown == false)
-                {
-                    Stop();
-                }
+                Stop();
+            }
 
+            lock (mClientConnections)
+            {
                 foreach (TcpConnection connection in mClientConnections)
                 {
                     connection.Dispose();
@@ -173,53 +146,74 @@ namespace Bespoke.Common.Net
 
                 mClientConnections.Clear();
                 mClientConnections = null;
+            }
 
+            lock (mConnectionsToClose)
+            {
                 mConnectionsToClose.Clear();
                 mConnectionsToClose = null;
-
-                if (mListenerReady != null)
-                {
-                    mListenerReady.Close();
-                    mListenerReady = null;
-                }
             }
         }
 
         /// <summary>
         /// Start the Tcp server.
         /// </summary>
-        /// <remarks>This is a blocking call and should be considered for use within a separate thread.</remarks>
-        public void Start()
+        /// <remarks>This is a non-blocking (asynchronous) call.</remarks>
+        /// <returns>A <seealso cref="Task"/>Task associated with the method.</returns>
+        public async Task Start()
         {
-            TcpListener listener = null;
+            mTcpListener = null;
 
-			try
-			{                
-				mIsShuttingDown = false;
+            try
+            {
+                mIsShuttingDown = false;
                 mAcceptingConnections = true;
 
-                listener = new TcpListener(mIPAddress, mPort);				
-				listener.Start(MaxPendingConnections);
+                mTcpListener = new TcpListener(IPAddress, Port);
+                mTcpListener.Start(MaxPendingConnections);
 
-				while (mAcceptingConnections)
-				{
-                    mListenerReady.Reset();
-                    listener.BeginAcceptSocket(EndAcceptSocket, listener);
-                    mListenerReady.WaitOne();                    
-				}
-			}
+                while (true)
+                {
+                    Socket socket = await mTcpListener.AcceptSocketAsync();
+                    if (socket == null)
+                    {
+                        break;
+                    }
+
+                    await Task.Run(() =>
+                    {
+                        TcpConnection connection = new TcpConnection(socket, LittleEndianByteOrder);
+                        connection.Disconnected += new EventHandler<TcpConnectionEventArgs>(OnDisconnected);
+                        connection.DataReceived += new EventHandler<TcpDataReceivedEventArgs>(OnDataReceived);
+
+                        lock (mClientConnections)
+                        {
+                            mClientConnections.Add(connection);
+                        }
+
+                        if (ReceiveDataInline)
+                        {
+                            connection.ReceiveDataAsync();
+                        }
+
+                        OnConnected(new TcpConnectionEventArgs(connection));
+                    });
+                }
+            }
+            catch (ObjectDisposedException)
+            {
+                // Supress exception
+            }
             finally
             {
-                if (listener != null)
-                {
-                    listener.Stop();
-                }
-
                 lock (mClientConnections)
                 {
-                    foreach (TcpConnection connection in mClientConnections)
+                    lock (mConnectionsToClose)
                     {
-                        MarkConnectionForClose(connection);
+                        foreach (TcpConnection connection in mClientConnections)
+                        {
+                            mConnectionsToClose.Add(connection);
+                        }
                     }
 
                     CloseMarkedConnections();
@@ -234,10 +228,8 @@ namespace Bespoke.Common.Net
         /// </summary>
         public void Stop()
         {
-            mAcceptingConnections = false;
-            mIsShuttingDown = true;
-            mListenerReady.Set();
-        }        
+            mTcpListener.Stop();
+        }
 
         /// <summary>
         /// Close an active connection.
@@ -255,45 +247,14 @@ namespace Bespoke.Common.Net
             }
             finally
             {
-                mClientConnections.Remove(connection);
+                lock (mClientConnections)
+                {
+                    mClientConnections.Remove(connection);
+                }
             }
         }
 
         #region Private Methods
-
-        /// <summary>
-        /// Asynchronous callback paired with TcpListener.BeginAcceptSocket()
-        /// </summary>
-        /// <param name="asyncResult"></param>
-        private void EndAcceptSocket(IAsyncResult asyncResult)
-        {
-            try
-            {
-                TcpListener listener = (TcpListener)asyncResult.AsyncState;
-                Socket socket = listener.EndAcceptSocket(asyncResult);
-                
-                TcpConnection connection = new TcpConnection(socket, mLittleEndianByteOrder);
-                connection.Disconnected += new EventHandler<TcpConnectionEventArgs>(OnDisconnected);
-                connection.DataReceived += new EventHandler<TcpDataReceivedEventArgs>(OnDataReceived);
-
-                if (mReceiveDataInline)
-                {
-                    connection.ReceiveDataAsynchronously();
-                }
-
-                mClientConnections.Add(connection);
-                OnConnected(new TcpConnectionEventArgs(connection));
-                
-            }
-            catch (ObjectDisposedException)
-            {
-                // Consume exception
-            }
-            finally
-            {
-                mListenerReady.Set();
-            }
-        }
 
         /// <summary>
         /// Raise the Connected event.
@@ -316,6 +277,7 @@ namespace Bespoke.Common.Net
         {
             if (Disconnected != null)
             {
+                CloseConnection(e.Connection);
                 Disconnected(this, e);
             }
         }
@@ -334,37 +296,27 @@ namespace Bespoke.Common.Net
         }
 
         /// <summary>
-        /// Mark a connection to be closed.
-        /// </summary>
-        /// <param name="connection">The connection to mark.</param>
-        private void MarkConnectionForClose(TcpConnection connection)
-        {
-            mConnectionsToClose.Add(connection);
-        }
-
-        /// <summary>
         /// Close marked connections.
         /// </summary>
         private void CloseMarkedConnections()
         {
-            foreach (TcpConnection connection in mConnectionsToClose)
+            lock (mConnectionsToClose)
             {
-                CloseConnection(connection);
-            }
+                foreach (TcpConnection connection in mConnectionsToClose)
+                {
+                    CloseConnection(connection);
+                }
 
-            mConnectionsToClose.Clear();
+                mConnectionsToClose.Clear();
+            }
         }
 
         #endregion
 
-        private IPAddress mIPAddress;
-        private int mPort;
+        private TcpListener mTcpListener;
         private List<TcpConnection> mClientConnections;
         private List<TcpConnection> mConnectionsToClose;
-        private bool mReceiveDataInline;
         private volatile bool mIsShuttingDown;
         private volatile bool mAcceptingConnections;
-        private ManualResetEvent mListenerReady;
-        private bool mLittleEndianByteOrder;
     }
 }

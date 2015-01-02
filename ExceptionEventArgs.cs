@@ -11,13 +11,7 @@ namespace Bespoke.Common
         /// <summary>
         /// Gets the associated <see cref="Exception"/>.
         /// </summary>
-        public Exception Exception
-        {
-            get
-            {
-                return mException;
-            }
-        }
+        public Exception Exception { get; private set; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ExceptionEventArgs"/> class.
@@ -25,9 +19,7 @@ namespace Bespoke.Common
         /// <param name="ex">The associated exception.</param>
         public ExceptionEventArgs(Exception ex)
         {
-            mException = ex;
+            Exception = ex;
         }
-
-        private Exception mException;
     }
 }

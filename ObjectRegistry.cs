@@ -51,7 +51,7 @@ namespace Bespoke.Common
         /// </summary>
         /// <typeparam name="T">The type of object expected to be stored with the specified name.</typeparam>
         /// <param name="name">The name of the object to get.</param>
-        /// <return> The object associated with the specified name. If the specified name is not found, null is returned.</return>
+        /// <returns>The object associated with the specified name. If the specified name is not found, null is returned.</returns>
         /// <exception cref="InvalidCastException"><paramref name="name"/> exists, but does not store specified type.</exception>
         public T GetRegisteredObject<T>(string name)
         {
@@ -77,7 +77,7 @@ namespace Bespoke.Common
         /// Gets the object associated with the type.
         /// </summary>
         /// <typeparam name="T">The type of object to search on.</typeparam>
-        /// <return> The object associated with the specified type. If the specified type is not found, null is returned.</return>
+        /// <returns>The object associated with the specified type. If the specified type is not found, null is returned.</returns>
         /// <exception cref="InvalidCastException">object exists with the associated type name, but does not store specified type.</exception>
         /// <remarks>Uses the type name as the key associated with the object.</remarks>
         public T GetRegisteredObject<T>()

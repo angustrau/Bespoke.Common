@@ -162,55 +162,6 @@ namespace Bespoke.Common
         }
 
         /// <summary>
-        /// Determine if a string represents a numeric value.
-        /// </summary>
-        /// <param name="value">The value to test.</param>
-        /// <returns>true if <paramref name="value"/> represents a numeric value; otherwise, false.</returns>
-        public static bool IsNumeric(string value)
-        {
-            int result;
-            return IsNumeric(value, out result);
-        }
-
-        /// <summary>
-        /// Determine if a string represents a numeric value.
-        /// </summary>
-        /// <param name="value">The value to test.</param>
-        /// <param name="result">The numeric value potentially stored within the string.</param>
-        /// <returns>true if <paramref name="value"/> represents a numeric value; otherwise, false.</returns>
-        public static bool IsNumeric(string value, out int result)
-        {
-            if (int.TryParse(value, out result))
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// Converts radians to degrees.
-        /// </summary>
-        /// <param name="radians">The angle in radians.</param>
-        /// <returns>The angle in degrees.</returns>
-        public static float ToDegrees(float radians)
-        {
-            return (radians * 57.29578f);
-        }
-
-        /// <summary>
-        /// Converts degrees to radians.
-        /// </summary>
-        /// <param name="degrees">The angle in degrees.</param>
-        /// <returns>The angle in radians</returns>
-        public static float ToRadians(float degrees)
-        {
-            return (degrees * 0.01745329f);
-        }
-
-        /// <summary>
         /// Get the values of an enumeration.
         /// </summary>
         /// <param name="enumType">The enumeration.</param>

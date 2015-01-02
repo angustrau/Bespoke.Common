@@ -11,24 +11,12 @@ namespace Bespoke.Common.Net
 		/// <summary>
         /// Gets the associated source end point.
 		/// </summary>
-		public IPEndPoint SourceEndPoint
-		{
-			get
-			{
-				return mSourceEndPoint;
-			}
-		}
+		public IPEndPoint SourceEndPoint { get; private set; }
 
 		/// <summary>
         /// Gets the associated data.
 		/// </summary>
-		public byte[] Data
-		{
-			get
-			{
-				return mData;
-			}
-		}
+        public byte[] Data { get; private set; }		
 
         /// <summary>
         /// Initializes a new instance of the <see cref="UdpDataReceivedEventArgs"/> class.
@@ -37,11 +25,8 @@ namespace Bespoke.Common.Net
         /// <param name="data">The associated data.</param>
 		public UdpDataReceivedEventArgs(IPEndPoint sourceEndPoint, byte[] data)
 		{
-			mSourceEndPoint = sourceEndPoint;
-			mData = data;
+			SourceEndPoint = sourceEndPoint;
+			Data = data;
 		}
-
-		private IPEndPoint mSourceEndPoint;
-		private byte[] mData;
 	}
 }

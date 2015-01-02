@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Linq;
 using System.Net;
+using System.Net.NetworkInformation;
 
 namespace Bespoke.Common.Net
 {
@@ -25,38 +27,51 @@ namespace Bespoke.Common.Net
         }
 
         /// <summary>
-        /// Determine if the specified end point is available.
+        /// Determine if the specified Udp end point is available.
         /// </summary>
         /// <param name="ipAddress">The IP address to check.</param>
         /// <param name="port">The port to check.</param>
         /// <returns>true if the specified end point is available; otherwise, false.</returns>
-        public static bool IsIPEndPointAvailable(IPAddress ipAddress, int port)
+        public static bool IsUdpEndPointAvailable(IPAddress ipAddress, int port)
         {
-            IPEndPoint ipEndPoint = new IPEndPoint(ipAddress, port);
-            return IsIPEndPointAvailable(ipEndPoint);
+            return IsUdpEndPointAvailable(new IPEndPoint(ipAddress, port));
         }
 
         /// <summary>
-        /// Determine if the specified end point is available.
+        /// Determine if the specified Udp end point is available.
         /// </summary>
         /// <param name="ipEndPoint">The IP end point to check.</param>
         /// <returns>true if the specified end point is available; otherwise, false.</returns>
-        public static bool IsIPEndPointAvailable(IPEndPoint ipEndPoint)
+        public static bool IsUdpEndPointAvailable(IPEndPoint ipEndPoint)
         {
-            bool isIPEndPointAvailable = true;
-
-            System.Net.NetworkInformation.IPGlobalProperties ipGlobalProperties = System.Net.NetworkInformation.IPGlobalProperties.GetIPGlobalProperties();
+            IPGlobalProperties ipGlobalProperties = IPGlobalProperties.GetIPGlobalProperties();
             IPEndPoint[] activeUdpListeners = ipGlobalProperties.GetActiveUdpListeners();
-            foreach (IPEndPoint activeUdpListener in activeUdpListeners)
-            {
-                if ((activeUdpListener.Address == ipEndPoint.Address) && (activeUdpListener.Port == ipEndPoint.Port))
-                {
-                    isIPEndPointAvailable = false;
-                    break;
-                }
-            }
 
-            return isIPEndPointAvailable;
+            return activeUdpListeners.Any(activeUdpListener => (activeUdpListener.Address == ipEndPoint.Address) && (activeUdpListener.Port == ipEndPoint.Port));
+        }
+
+        /// <summary>
+        /// Determine if the specified Tcp end point is available.
+        /// </summary>
+        /// <param name="ipAddress">The IP address to check.</param>
+        /// <param name="port">The port to check.</param>
+        /// <returns>true if the specified end point is available; otherwise, false.</returns>
+        public static bool IsTcpEndPointAvailable(IPAddress ipAddress, int port)
+        {
+            return IsTcpEndPointAvailable(new IPEndPoint(ipAddress, port));
+        }
+
+        /// <summary>
+        /// Determine if the specified Tcp end point is available.
+        /// </summary>
+        /// <param name="ipEndPoint">The IP end point to check.</param>
+        /// <returns>true if the specified end point is available; otherwise, false.</returns>
+        public static bool IsTcpEndPointAvailable(IPEndPoint ipEndPoint)
+        {
+            IPGlobalProperties ipGlobalProperties = IPGlobalProperties.GetIPGlobalProperties();
+            IPEndPoint[] activeTcpListeners = ipGlobalProperties.GetActiveTcpListeners();
+
+            return activeTcpListeners.Any(activeUdpListener => (activeUdpListener.Address == ipEndPoint.Address) && (activeUdpListener.Port == ipEndPoint.Port));
         }
     }
 }

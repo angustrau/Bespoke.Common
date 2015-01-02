@@ -288,6 +288,7 @@ namespace Bespoke.Common
         /// Remove a node from the collection.
         /// </summary>
         /// <param name="item">The node to remove.</param>
+        /// <returns>true if item is successfully removed; otherwise, false. This method also returns false if item was not found in the list.</returns>
         public bool Remove(Node<T> item)
         {
             return mList.Remove(item);

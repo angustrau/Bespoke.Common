@@ -18,24 +18,12 @@ namespace Bespoke.Common.Net
             /// <summary>
             /// Gets the associated client.
             /// </summary>
-            public UdpClient Client
-            {
-                get
-                {
-                    return mClient;
-                }
-            }
+            public UdpClient Client { get; private set; }
 
             /// <summary>
             /// Gets the associted end point.
             /// </summary>
-            public IPEndPoint IPEndPoint
-            {
-                get
-                {
-                    return mIPEndPoint;
-                }
-            }
+            public IPEndPoint IPEndPoint { get; private set; }            
 
             /// <summary>
             /// Initializes a new instance of the <see cref="UdpState"/> class.
@@ -44,12 +32,9 @@ namespace Bespoke.Common.Net
             /// <param name="ipEndPoint">The associated end point.</param>
             public UdpState(UdpClient client, IPEndPoint ipEndPoint)
             {
-                mClient = client;
-                mIPEndPoint = ipEndPoint;
+                Client = client;
+                IPEndPoint = ipEndPoint;
             }
-
-            private UdpClient mClient;
-            private IPEndPoint mIPEndPoint;
         }
 
 		#region Events
@@ -66,35 +51,17 @@ namespace Bespoke.Common.Net
 		/// <summary>
 		/// Gets the IP address the Udp server is bound to.
 		/// </summary>
-		public IPAddress IPAddress
-		{
-			get
-			{
-				return mIPAddress;
-			}
-		}
+        public IPAddress IPAddress { get; private set; }
 
 		/// <summary>
         /// Gets the port the Udp server is bound to.
 		/// </summary>
-		public int Port
-		{
-			get
-			{
-				return mPort;
-			}
-		}
+		public int Port { get; private set; }
 
 		/// <summary>
 		/// Gets the multicast address the server is joined to.
 		/// </summary>
-		public IPAddress MulticastAddress
-		{
-			get
-			{
-				return mMulticastAddress;
-			}
-		}
+		public IPAddress MulticastAddress { get; private set; }
 
 		/// <summary>
 		/// Gets the state of the server.
@@ -110,13 +77,7 @@ namespace Bespoke.Common.Net
 		/// <summary>
         /// Gets the associated transmission type.
 		/// </summary>
-		public TransmissionType TransmissionType
-		{
-			get
-			{
-				return mTransmissionType;
-			}
-		}
+        public TransmissionType TransmissionType { get; private set; }		
 
 		#endregion
 
@@ -161,14 +122,14 @@ namespace Bespoke.Common.Net
 		/// <param name="transmissionType">The associated transmission type.</param>
         public UdpServer(IPAddress ipAddress, int port, IPAddress multicastAddress, TransmissionType transmissionType)
         {
-            mPort = port;
-            mIPAddress = ipAddress;
-			mTransmissionType = transmissionType;
+            Port = port;
+            IPAddress = ipAddress;
+			TransmissionType = transmissionType;
 
-			if (mTransmissionType == TransmissionType.Multicast)
+			if (TransmissionType == TransmissionType.Multicast)
 			{
 				Assert.ParamIsNotNull(multicastAddress);
-				mMulticastAddress = multicastAddress;
+				MulticastAddress = multicastAddress;
 			}
 
             mAsynCallback = new AsyncCallback(EndReceive);
@@ -181,11 +142,11 @@ namespace Bespoke.Common.Net
 		{
             IPEndPoint ipEndPoint;
 
-            switch (mTransmissionType)
+            switch (TransmissionType)
             {
                 case TransmissionType.Unicast:
                 {
-                    ipEndPoint = new IPEndPoint(mIPAddress, mPort);
+                    ipEndPoint = new IPEndPoint(IPAddress, Port);
  
                     Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
                     socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, 1);
@@ -198,7 +159,7 @@ namespace Bespoke.Common.Net
 
                 case TransmissionType.Multicast:
                 {
-                    ipEndPoint = new IPEndPoint(IPAddress.Any, mPort);
+                    ipEndPoint = new IPEndPoint(IPAddress.Any, Port);
 
                     Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
                     socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, 1);
@@ -206,14 +167,14 @@ namespace Bespoke.Common.Net
 
                     mUdpClient = new UdpClient();
                     mUdpClient.Client = socket;
-                    mUdpClient.JoinMulticastGroup(mMulticastAddress);
+                    mUdpClient.JoinMulticastGroup(MulticastAddress);
                     break;
                 }
 
                 case TransmissionType.Broadcast:
                 case TransmissionType.LocalBroadcast:
                 {
-                    ipEndPoint = new IPEndPoint(IPAddress.Any, mPort);
+                    ipEndPoint = new IPEndPoint(IPAddress.Any, Port);
 
                     Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
                     socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, 1);
@@ -243,9 +204,9 @@ namespace Bespoke.Common.Net
 
             if (mUdpClient != null)
             {
-                if (mTransmissionType == TransmissionType.Multicast)
+                if (TransmissionType == TransmissionType.Multicast)
                 {
-                    mUdpClient.DropMulticastGroup(mMulticastAddress);
+                    mUdpClient.DropMulticastGroup(MulticastAddress);
                 }
 
                 mUdpClient.Close();
@@ -297,10 +258,6 @@ namespace Bespoke.Common.Net
 
 		#endregion
 
-		private IPAddress mIPAddress;
-		private int mPort;
-		private IPAddress mMulticastAddress;
-		private TransmissionType mTransmissionType;
         private UdpClient mUdpClient;
         private AsyncCallback mAsynCallback;
         

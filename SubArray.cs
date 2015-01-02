@@ -5,7 +5,7 @@ using System.Collections.Generic;
 namespace Bespoke.Common
 {
     /// <summary>
-    /// Represented a subset of an array,
+    /// Represented a subset of an array.
     /// </summary>
     /// <typeparam name="T">The underlying array type.</typeparam>
     public class SubArray<T> : IEnumerable<T>
@@ -13,13 +13,7 @@ namespace Bespoke.Common
         /// <summary>
         /// Gets the length of the array.
         /// </summary>
-        public int Length
-        {
-            get
-            {
-                return mLength;
-            }
-        }
+        public int Length { get; private set; }
 
         /// <summary>
         /// Gets the value at the specified index.
@@ -31,7 +25,7 @@ namespace Bespoke.Common
         {
             get
             {
-                if (index < 0 || index >= mLength)
+                if (index < 0 || index >= Length)
                 {
                     throw new ArgumentOutOfRangeException();
                 }
@@ -62,7 +56,7 @@ namespace Bespoke.Common
 
             mSource = source;
             mStart = start;
-            mLength = length;
+            Length = length;
         }
 
         /// <summary>
@@ -71,7 +65,7 @@ namespace Bespoke.Common
         /// <returns>An enumerator for the array.</returns>
         public IEnumerator<T> GetEnumerator()
         {
-            for (int i = 0; i < mLength; i++)
+            for (int i = 0; i < Length; i++)
             {
                 yield return mSource[mStart + i];
             }
@@ -92,13 +86,12 @@ namespace Bespoke.Common
         /// <returns>The newly allocated array.</returns>
         public T[] ToArray()
         {
-            T[] result = new T[mLength];
-            Array.Copy(mSource, mStart, result, 0, mLength);
+            T[] result = new T[Length];
+            Array.Copy(mSource, mStart, result, 0, Length);
             return result;
         }
 
         private T[] mSource;
         private int mStart;
-        private int mLength;
     }
 }

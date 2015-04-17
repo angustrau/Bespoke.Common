@@ -15,7 +15,7 @@ namespace Bespoke.Common.Net
         /// </summary>
         /// <returns>The list of IP addresses bound to this computer.</returns>
         /// <exception cref="Exception">Thrown if no local IP addresses are found.</exception>
-        public static IPAddress[] GetLocalIPAddress()
+        public static IPAddress[] GetLocalIPAddresses()
         {
             IPAddress[] localAddresses = Dns.GetHostAddresses(Dns.GetHostName());
             if (localAddresses.Length == 0)

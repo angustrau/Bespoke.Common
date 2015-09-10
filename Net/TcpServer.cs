@@ -71,7 +71,10 @@ namespace Bespoke.Common.Net
         {
             get
             {
-                return mClientConnections.Count;
+				lock (mClientConnections)
+				{
+					return mClientConnections.Count; 
+				}
             }
         }
 
@@ -228,7 +231,10 @@ namespace Bespoke.Common.Net
         /// </summary>
         public void Stop()
         {
-            mTcpListener.Stop();
+			if (mTcpListener != null)
+			{
+				mTcpListener.Stop();
+			}
         }
 
         /// <summary>

@@ -205,7 +205,7 @@ namespace Bespoke.Common.Net
                                         mCompletelyReceivedData.RemoveRange(0, mMessageLength);
                                     }
 
-                                    mBytesToProcessRemaining = 0;
+                                    mBytesToProcessRemaining -= mMessageLength;
                                     break;
                                 }
                         }
